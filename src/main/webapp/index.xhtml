@@ -1,0 +1,208 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:t="http://myfaces.apache.org/tomahawk">
+    <h:head>
+        <title>Parametry Dom Finansowy QS</title>
+        <h:outputStylesheet library="css" name="style.css"/> 
+        <link href="resources/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+        <script src="resources/js/bootstrap.min.js" type="text/javascript"></script>
+    </h:head>
+    <h:body>
+        <div class="row" style="margin-top: 50px;">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8">
+        <h:form>            
+            <p:dataTable id="parameterTable" var="paramet" value="#{databaseManager.parametersFromDB}"
+                         paginatorTemplate="{PreviousPageLink} {PageLinks} {NextPageLink}"
+                         paginator="true" rows="10" style="margin-bottom:20px">
+                <p:column headerText="Id" sortBy="#{paramet.id}">
+                    <h:outputText value="#{paramet.id}" />
+                </p:column>
+
+                <p:column headerText="Name" sortBy="#{paramet.name}">
+                    <h:outputText value="#{paramet.name}" />
+                </p:column>
+                <p:column headerText="Description" sortBy="#{paramet.description}">
+                    <h:outputText value="#{paramet.description}" />
+                </p:column>
+                <p:column headerText="Categories">
+                    <t:dataList layout="unorderedList" value="#{paramet.parameterCategories}" var="cat">
+                        <h:outputText value="#{cat.name}" />
+                    </t:dataList>
+                </p:column>
+                <p:column headerText="Type" sortBy="#{paramet.parameterType}">
+                    <h:outputText value="#{paramet.parameterType}" />
+                </p:column>
+                <p:column headerText="Value" sortBy="#{paramet.parameterValue}">
+                    <h:outputText value="#{paramet.parameterValue}" />
+                </p:column>
+                
+                <p:column headerText="Edit / Remove">                   
+                    <p:commandButton value="Edit" id="editBtn" 
+                                     update="@all" 
+                                     actionListener="#{databaseManager.loadParameterToEdit(paramet)}" 
+                                     styleClass="ui-priority-primary" />
+                    <p:commandButton value="Remove" id="removeBtn" 
+                                     update="@all" 
+                                     actionListener="#{databaseManager.removeParameterFromDB(paramet)}" 
+                                     styleClass="ui-priority-primary" />
+                </p:column>
+            </p:dataTable>            
+        </h:form>
+        </div>
+        <div class="col-lg-2"></div>
+        </div>
+        <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-3">
+        <h:form>
+            <p:fieldset legend="Add parameter">                
+                <h:panelGrid columns="1" cellpadding="5">                    
+                    <p:outputLabel for="name" value="Name: " />
+                    <p:inputText id="name" value="#{parameter.name}"/>
+                    
+                    <p:outputLabel for="desc" value="Description: "/>
+                    <p:inputTextarea  id="desc" rows="6" cols="33" value="#{parameter.description}"/>
+                    
+                    <p:outputLabel for="category" value="Categories: " />
+                    <p:inputText id="category" value="#{parameterCategory.name}"/>
+                    
+                    <p:commandButton style="float:left;" value="Add" id="btnAdd" 
+                                     process="@this,category" 
+                                     update="categoryTable" 
+                                     actionListener="#{parameter.addParameterCategory(parameterCategory)}" />
+                    <p:dataTable var="category" id="categoryTable" value="#{parameter.parameterCategories}">
+                        <p:column headerText="Category name">
+                            <p:commandButton value="Remove" id="btnRemove" 
+                                             process="@this,categoryTable" 
+                                             update="categoryTable" 
+                                             actionListener="#{parameter.removeParameterCategory(category)}" />
+                            <h:outputText value="#{category.name}"/>
+                        </p:column>                            
+                    </p:dataTable><br/>
+                    
+                    <h:panelGrid columns="2" cellpadding="5">
+                        <h:form>  
+                            <h:outputLabel for="typeRadio" value="Select parameter type:" />
+                            <h:selectOneRadio required="true"  id="typeRadio" 
+                                              layout="pageDirection" 
+                                              value="#{parameter.parameterRadioChoose}">                                
+                                <f:selectItem itemLabel="Text" itemValue="0"/>
+                                <f:selectItem itemLabel="Date" itemValue="1"/>
+                                <f:selectItem itemLabel="Number" itemValue="2" />
+                                <f:ajax execute="@this" render="typePanel"/>                                                           
+                            </h:selectOneRadio>  
+
+                            <h:panelGroup id="typePanel">                        
+                                <h:panelGrid rendered="#{parameter.parameterType eq 'TEXT'}">
+                                    <p:outputLabel for="textValue" value="Type text value: " />
+                                    <p:inputText id="textValue" value="#{parameterValue.textValue}" required="true"/>                        
+                                </h:panelGrid>
+
+                                <h:panelGrid rendered="#{parameter.parameterType eq 'DATE'}">
+                                    <p:outputLabel for="dateValue" value="Type date value: " />
+                                    <p:calendar id="dateValue" value="#{parameterValue.dateValue}" 
+                                                pattern="dd-MM-yyyy" 
+                                                mask="true" 
+                                                required="true"/>
+                                </h:panelGrid>
+
+                                <h:panelGrid rendered="#{parameter.parameterType eq 'NUMBER'}">                        
+                                    <p:outputLabel for="numberValue" value="Type number value: " />
+                                    <p:inputNumber id="numberValue" value="#{parameterValue.numberValue}" 
+                                                   required="true"/>
+                                </h:panelGrid>  
+                            </h:panelGroup>    
+                        </h:form>                    
+                    </h:panelGrid>    
+                </h:panelGrid>
+                <p:commandButton value="AddParameter" id="btnAddParameter" 
+                                 process="@all" 
+                                 update="@all" 
+                                 actionListener="#{databaseManager.addParameterToDB(parameter, parameterValue)}" />
+            </p:fieldset>
+        </h:form>
+        </div>
+        <div class="col-lg-3">
+        <h:form>
+            <p:fieldset legend="Edit">                
+                <h:panelGrid id="editPanel" columns="1" cellpadding="5">  
+                    <p:outputLabel for="name" value="Change name: " />
+                    <p:inputText id="name" placeholder="#{tempParameter.name}" value="#{tempParameter.name}"/>
+                    <p:outputLabel for="desc" value="Description: "/>
+                    <p:inputTextarea  id="desc" rows="6" cols="33" placeholder="#{tempParameter.description}"  value="#{tempParameter.description}"/>
+                    <p:outputLabel style="margin-left: auto; margin-right: auto;" value="Manage categories"/>
+                    
+                    <h:panelGrid columns="1">  
+                        <h:panelGroup>                            
+                            <p:outputLabel for="category" value="Add new category: " />
+                            <p:inputText id="category" value="#{tempParameterCategory.name}"/>                        
+                            <p:commandButton value="Add" id="btnAdd" process="@this,category" 
+                                             update="displayCategories" 
+                                             actionListener="#{tempParameter.addParameterCategory(tempParameterCategory)}" />
+                        </h:panelGroup>
+                        <p:dataTable id="displayCategories" var="category" value="#{tempParameter.parameterCategories}">
+                            <p:column headerText="Categories:">
+                                <p:commandButton value="Remove" id="btnRemove" 
+                                             process="@this,displayCategories" 
+                                             update="displayCategories" 
+                                             actionListener="#{tempParameter.removeParameterCategory(category)}" />
+                                <h:outputText value="#{category.name}" />
+                            </p:column>                            
+                        </p:dataTable>
+                    </h:panelGrid>
+                        <h:outputLabel for="displayType" value="Actual type:"/>
+                        <h:outputText id="displayType" value="#{tempParameter.parameterType}"/>
+                        <h:outputLabel for="displayValue" value="Actual value:"/>
+                        <h:outputText id="displayValue" value="#{tempParameter.parameterValue}"/>
+                   
+                        <h:selectOneRadio required="true"  id="typeRadio" 
+                                              layout="pageDirection" 
+                                              value="#{tempParameter.parameterRadioChoose}" >                                
+                                <f:selectItem itemLabel="Text" itemValue="0"/>
+                                <f:selectItem itemLabel="Date" itemValue="1"/>
+                                <f:selectItem itemLabel="Number" itemValue="2" />
+                                <f:ajax execute="@this" render="editTypePanel"/>                                                           
+                        </h:selectOneRadio>
+                        
+                        <h:panelGroup id="editTypePanel">                        
+                            <h:panelGrid rendered="#{tempParameter.parameterType eq 'TEXT'}">                                    
+                                    <p:outputLabel for="textValue" value="Type new text value: " />
+                                    <p:inputText id="textValue" placeholder="#{tempParameter.parameterValue}" 
+                                                 value="#{tempParameterValue.textValue}" 
+                                                 required="true"/>                        
+                                </h:panelGrid>
+
+                                <h:panelGrid rendered="#{tempParameter.parameterType eq 'DATE'}">
+                                    <p:outputLabel for="dateValue" value="Type new date value: " />
+                                    <p:calendar id="dateValue" placeholder="#{tempParameter.parameterValue}" 
+                                                value="#{tempParameterValue.dateValue}" 
+                                                pattern="dd-MM-yyyy" 
+                                                mask="true" 
+                                                required="true"/>
+                                </h:panelGrid>
+
+                                <h:panelGrid rendered="#{tempParameter.parameterType eq 'NUMBER'}">                        
+                                    <p:outputLabel for="numberValue" value="Type new number value: " />
+                                    <p:inputNumber id="numberValue" placeholder="#{tempParameter.parameterValue}" 
+                                                   value="#{tempParameterValue.numberValue}" 
+                                                   required="true"/>
+                                </h:panelGrid>  
+                        </h:panelGroup>
+                        <p:commandButton value="Change parameter" id="btnChangeParameter" 
+                                 process="@all" 
+                                 update="@all" 
+                                 actionListener="#{databaseManager.changeParameter()}" />
+                </h:panelGrid>
+            </p:fieldset>
+        </h:form>
+        </div>
+        <div class="col-lg-2"></div>
+        </div>
+    </h:body>
+</html>
+
